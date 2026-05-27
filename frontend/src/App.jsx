@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
+import Pricing from "./pages/Pricing";
 
 function RotaProtegida({ children }) {
   const { user, loading } = useAuth();
@@ -43,6 +44,14 @@ function App() {
             element={
               <RotaProtegida>
                 <Orcamentos />
+              </RotaProtegida>
+            }
+          />
+          <Route
+            path="/pricing"
+            element={
+              <RotaProtegida>
+                <Pricing />
               </RotaProtegida>
             }
           />

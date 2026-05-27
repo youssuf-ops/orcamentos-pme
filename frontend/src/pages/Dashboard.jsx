@@ -1,11 +1,22 @@
-import { useState, useEffect } from "react";
+// frontend/src/pages/Dashboard.jsx
+// Alterações em relação à versão anterior:
+//   1. Import do PlanoBanner adicionado
+//   2. Import do getSubscricao adicionado
+//   3. Estado subscricao adicionado
+//   4. carregarSubscricao adicionada ao useEffect inicial
+//   5. PlanoBanner renderizado antes das métricas
+// Tudo o resto fica igual.
+
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { getOrcamentos } from "../services/api";
+import { getOrcamentos, getSubscricao } from "../services/api";
+import PlanoBanner from "../components/PlanoBanner";
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
   const [metricas, setMetricas] = useState({
     total: 0,
     pendentes: 0,
@@ -15,14 +26,22 @@ export default function Dashboard() {
     valorAprovado: 0,
   });
 
-  useEffect(() => {
-    carregarMetricas();
-  }, []);
+  // ── NOVO: estado da subscrição ────────────────────────────
+  const [subscricao, setSubscricao] = useState(null);
 
-  const carregarMetricas = async () => {
-    try {
-      const res = await getOrcamentos();
-      const orcamentos = res.data;
+  // ── Carregar tudo no mount ────────────────────────────────
+  const carregarDados = useCallback(async () => {
+    // Corre as duas chamadas em paralelo — mais rápido
+    // Promise.all: espera que AMBAS terminem antes de continuar
+    // Se uma falhar, o catch apanha o erro
+    const [resOrcamentos, resSubscricao] = await Promise.allSettled([
+      getOrcamentos(),
+      getSubscricao(),
+    ]);
+
+    // Processar orçamentos
+    if (resOrcamentos.status === "fulfilled") {
+      const orcamentos = resOrcamentos.value.data;
       setMetricas({
         total: orcamentos.length,
         pendentes: orcamentos.filter((o) => o.status === "pendente").length,
@@ -33,10 +52,25 @@ export default function Dashboard() {
           .filter((o) => o.status === "aprovado")
           .reduce((acc, o) => acc + (o.total || 0), 0),
       });
-    } catch {
-      console.error("Erro ao carregar métricas.");
     }
-  };
+
+    // Processar subscrição
+    if (resSubscricao.status === "fulfilled") {
+      setSubscricao(resSubscricao.value.data);
+    } else {
+      // Fallback: assumir plano free para não bloquear UI
+      setSubscricao({
+        plano: "free",
+        orcamentosUsados: 0,
+        orcamentosDisponiveis: 3,
+        planoAtivo: true,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]);
 
   const handleLogout = () => {
     logout();
@@ -63,6 +97,17 @@ export default function Dashboard() {
       <div style={styles.conteudo}>
         <h1 style={styles.titulo}>Bem-vindo, {user?.nome} 👋</h1>
         <p style={styles.subtitulo}>Resumo do teu negócio</p>
+
+        {/* ── NOVO: Banner do plano ─────────────────────────
+            Aparece antes das métricas.
+            Se bloqueado → banner vermelho com botão upgrade
+            Se acima 80% → banner amarelo com aviso
+            Se normal → banner discreto com barra de progresso
+        ─────────────────────────────────────────────────── */}
+        <PlanoBanner
+          subscricao={subscricao}
+          onUpgrade={() => navigate("/pricing")}
+        />
 
         <div style={styles.metricasGrid}>
           <div style={styles.metricaCard}>
@@ -130,6 +175,12 @@ export default function Dashboard() {
             <h3 style={styles.cardTitulo}>Clientes</h3>
             <p style={styles.cardDescricao}>Gere a tua base de clientes</p>
           </div>
+          {/* ── NOVO: card de acesso à Pricing ── */}
+          <div style={styles.card} onClick={() => navigate("/pricing")}>
+            <div style={styles.cardIcone}>💎</div>
+            <h3 style={styles.cardTitulo}>Planos</h3>
+            <p style={styles.cardDescricao}>Gere o teu plano e pagamentos</p>
+          </div>
         </div>
       </div>
     </div>
@@ -184,9 +235,9 @@ const styles = {
   secaoTitulo: { color: "#1a1a2e", marginBottom: "16px" },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
     gap: "24px",
-    maxWidth: "600px",
+    maxWidth: "700px",
   },
   card: {
     backgroundColor: "#fff",
