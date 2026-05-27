@@ -1,781 +1,264 @@
 // ============================================================
 // frontend/src/pages/LandingPage.jsx
-//
-// Página pública — rota /
-// Qualquer pessoa vê sem estar autenticada.
-// Objetivo: converter visitante em conta registada.
+// Design: roxo/rosa/laranja — consistente com Pricing.jsx
+// Hero com mockups de telemóvel a mostrar screenshots reais
 // ============================================================
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useRef } from "react";
 
-// ── Fonte via @import no head ─────────────────────────────
-const fontLink = document.createElement("link");
-fontLink.rel = "stylesheet";
-fontLink.href =
-  "https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500&display=swap";
-document.head.appendChild(fontLink);
+// ── Injectar fonte e animações ────────────────────────────
+const _font = document.createElement("link");
+_font.rel = "stylesheet";
+_font.href = "https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap";
+document.head.appendChild(_font);
 
-// ── Injectar animações CSS globais ────────────────────────
-const style = document.createElement("style");
-style.textContent = `
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(28px); }
-    to   { opacity: 1; transform: translateY(0); }
+const _style = document.createElement("style");
+_style.textContent = `
+  @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes floatA { 0%,100%{transform:translateY(-50%) rotate(-4deg)} 50%{transform:translateY(calc(-50% - 14px)) rotate(-4deg)} }
+  @keyframes floatB { 0%,100%{transform:translateY(-50%) rotate(4deg)} 50%{transform:translateY(calc(-50% - 10px)) rotate(4deg)} }
+  @keyframes glowAnim { 0%,100%{opacity:.4} 50%{opacity:.85} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .f1{animation:fadeUp .7s .05s ease both}
+  .f2{animation:fadeUp .7s .2s ease both}
+  .f3{animation:fadeUp .7s .35s ease both}
+  .f4{animation:fadeUp .7s .5s ease both}
+  .f5{animation:fadeUp .7s .65s ease both}
+  .mock-a{position:absolute;left:5%;top:50%;animation:floatA 5s ease-in-out infinite;z-index:2}
+  .mock-b{position:absolute;right:5%;top:50%;animation:floatB 6s 1s ease-in-out infinite;z-index:1}
+  .land-primary:hover{transform:translateY(-2px);box-shadow:0 0 52px rgba(168,85,247,.5)!important}
+  .land-sec:hover{border-color:#555!important}
+  .feat-c:hover{background:#0d0d12!important}
+  .plano-c:hover{transform:translateY(-4px);border-color:rgba(168,85,247,.4)!important}
+  .faq-b:hover{background:#0d0d12!important}
+  @media(max-width:768px){
+    .hero-layout{flex-direction:column!important}
+    .hero-right{display:none!important}
+    .feat-grid-3{grid-template-columns:1fr!important}
   }
-  @keyframes glowPulse {
-    0%, 100% { opacity: 0.5; }
-    50%       { opacity: 0.9; }
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.3; }
-  }
-  .fade-1 { animation: fadeUp 0.7s 0.1s ease both; }
-  .fade-2 { animation: fadeUp 0.7s 0.25s ease both; }
-  .fade-3 { animation: fadeUp 0.7s 0.4s ease both; }
-  .fade-4 { animation: fadeUp 0.7s 0.55s ease both; }
-  .fade-5 { animation: fadeUp 0.7s 0.7s ease both; }
-  .plano-card-land:hover { transform: translateY(-4px); border-color: rgba(0,229,160,0.4) !important; }
-  .btn-land-primary:hover { transform: translateY(-2px); box-shadow: 0 0 48px rgba(0,229,160,0.45) !important; }
-  .btn-land-secondary:hover { border-color: #555 !important; }
-  .feature-card-land:hover { background: #161616 !important; }
-  .step-land:hover .step-num-land { color: rgba(0,229,160,0.3) !important; }
 `;
-document.head.appendChild(style);
+document.head.appendChild(_style);
 
-// ── Dados ─────────────────────────────────────────────────
-const PLANOS = [
-  {
-    id: "free",
-    nome: "Gratuito",
-    preco: "€0",
-    periodo: "",
-    orcs: "3 orçamentos",
-    desc: "Para experimentar sem compromisso.",
-    destaque: false,
-    features: ["3 orçamentos", "PDF profissional", "Gestão de clientes", "Dashboard"],
-  },
-  {
-    id: "starter",
-    nome: "Starter",
-    preco: "€20",
-    periodo: "compra única",
-    orcs: "20 orçamentos",
-    desc: "Para começar a trabalhar a sério.",
-    destaque: false,
-    features: ["20 orçamentos", "Não expira", "PDF profissional", "Suporte email"],
-  },
-  {
-    id: "pro",
-    nome: "Pro",
-    preco: "€45",
-    periodo: "compra única",
-    orcs: "60 orçamentos",
-    desc: "Para negócios em crescimento.",
-    destaque: true,
-    features: ["60 orçamentos", "Não expira", "PDF profissional", "Suporte prioritário"],
-  },
-  {
-    id: "ilimitado",
-    nome: "Ilimitado",
-    preco: "€19",
-    periodo: "/mês",
-    orcs: "Ilimitados",
-    desc: "Para quem emite muito.",
-    destaque: false,
-    features: ["Sem limite", "Renovação mensal", "Suporte prioritário", "Funcionalidades primeiro"],
-  },
-];
+const GRAD = "linear-gradient(135deg,#a855f7,#ec4899,#f97316)";
 
 const FEATURES = [
-  { icon: "📄", titulo: "PDF em 1 clique", desc: "Orçamento com o teu nome, serviços e totais com IVA. Pronto a enviar por WhatsApp ou email." },
-  { icon: "👥", titulo: "Base de clientes", desc: "Cria e gere os teus clientes. Histórico completo de orçamentos por cliente em segundos." },
-  { icon: "📊", titulo: "Dashboard em tempo real", desc: "Aprovados, pendentes e valor total em aberto. Sabes sempre o estado do teu negócio." },
-  { icon: "🔐", titulo: "Dados isolados", desc: "Autenticação JWT. A tua conta é privada — nenhum outro utilizador vê os teus dados." },
-  { icon: "⚡", titulo: "2 minutos por orçamento", desc: "Do zero ao PDF em menos de 2 minutos. Funciona em telemóvel, tablet e computador." },
-  { icon: "🧮", titulo: "IVA automático", desc: "O sistema calcula subtotal, IVA e total sem erro. Zero cálculos manuais." },
+  { icon:"📄", t:"PDF em 1 clique", d:"Orçamento com o teu nome, serviços e IVA. Pronto a enviar por WhatsApp ou email." },
+  { icon:"👥", t:"Base de clientes", d:"Cria e gere os teus clientes. Histórico completo de orçamentos por cliente." },
+  { icon:"📊", t:"Dashboard em tempo real", d:"Aprovados, pendentes e valor em aberto. Sabes sempre o estado do negócio." },
+  { icon:"🔐", t:"Dados isolados", d:"Autenticação JWT. A tua conta é privada — nenhum outro utilizador vê os teus dados." },
+  { icon:"⚡", t:"2 minutos por orçamento", d:"Do zero ao PDF em menos de 2 minutos. Funciona em telemóvel, tablet e PC." },
+  { icon:"🧮", t:"IVA automático", d:"O sistema calcula subtotal, IVA e total sem erros. Zero cálculos manuais." },
 ];
 
-const PASSOS = [
-  { n: "01", titulo: "Cria a tua conta", desc: "Regista-te com o nome do teu negócio e email. Acesso imediato — sem cartão, sem espera." },
-  { n: "02", titulo: "Adiciona o cliente", desc: "Cria o cliente com nome e contacto. Fica guardado para todos os orçamentos futuros." },
-  { n: "03", titulo: "Cria o orçamento", desc: "Adiciona serviços, quantidades e preços. O sistema calcula IVA e total em tempo real." },
-  { n: "04", titulo: "Gera e envia o PDF", desc: "Clica em Gerar PDF. Fazes download e envias por WhatsApp ou email — ali mesmo." },
+const PLANOS = [
+  { id:"free",     nome:"Gratuito",     preco:"€0",  per:"",            orcs:"3 orçamentos",         desc:"Para experimentar.",          destaque:false, feats:["3 orçamentos","PDF profissional","Gestão de clientes","Dashboard"] },
+  { id:"starter",  nome:"Pack Starter", preco:"€20", per:"compra única", orcs:"20 orçamentos",        desc:"Para começar a sério.",        destaque:false, feats:["20 orçamentos","Não expira","PDF profissional","Suporte email"] },
+  { id:"pro",      nome:"Pack Pro",     preco:"€45", per:"compra única", orcs:"60 orçamentos",        desc:"Para negócios em crescimento.", destaque:true,  feats:["60 orçamentos","Não expira","PDF profissional","Suporte prioritário"] },
+  { id:"ilimitado",nome:"Ilimitado",    preco:"€19", per:"/mês",         orcs:"Orçamentos ilimitados", desc:"Para quem emite muito.",       destaque:false, feats:["Sem limite","Renovação mensal","Suporte prioritário","Funcionalidades primeiro"] },
 ];
 
-// ── Componente principal ───────────────────────────────────
+const FAQ = [
+  { q:"Os meus dados ficam seguros?",       a:"Sim. JWT e isolamento total — nenhum utilizador vê os teus orçamentos ou clientes." },
+  { q:"Os packs expiram?",                  a:"Starter (20) e Pro (60) não expiram. Usas ao teu ritmo. O plano Ilimitado é mensal." },
+  { q:"Como funciona o pagamento?",         a:"MB WAY ou Multibanco via EuPago, supervisionada pelo Banco de Portugal. Ativação imediata." },
+  { q:"Posso cancelar quando quiser?",      a:"Sim. Sem contratos mínimos. Os packs são compra única — pagas uma vez, usas sem prazo." },
+  { q:"Preciso de instalar alguma coisa?",  a:"Não. 100% no browser — Chrome, Safari, Firefox. Telemóvel, tablet ou computador." },
+];
+
+// ── Helpers ───────────────────────────────────────────────
+function GradText({ children }) {
+  return <span style={{ background:GRAD, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", backgroundClip:"text" }}>{children}</span>;
+}
+
+function SectionTag({ children }) {
+  return <span style={{ fontSize:11, fontWeight:700, letterSpacing:"0.1em", textTransform:"uppercase", background:GRAD, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", display:"block", marginBottom:10 }}>{children}</span>;
+}
+
+function PhoneMock({ img }) {
+  return (
+    <div style={{ width:200, height:400, borderRadius:30, border:"2px solid rgba(168,85,247,.25)", background:"#0a0a0f", boxShadow:"0 28px 70px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.04)", overflow:"hidden", position:"relative" }}>
+      <div style={{ position:"absolute", top:10, left:"50%", transform:"translateX(-50%)", width:50, height:5, borderRadius:3, background:"rgba(255,255,255,.1)", zIndex:2 }} />
+      <img src={img} alt="App" style={{ width:"100%", height:"100%", objectFit:"cover", objectPosition:"top", borderRadius:28 }} />
+      <div style={{ position:"absolute", bottom:0, left:0, right:0, height:60, background:"linear-gradient(transparent,rgba(10,10,15,.9))" }} />
+    </div>
+  );
+}
+
+function FaqList({ items }) {
+  const [open, setOpen] = useState(null);
+  return (
+    <div style={{ border:"1px solid rgba(255,255,255,.07)", borderRadius:14, overflow:"hidden", marginTop:32 }}>
+      {items.map((item, i) => (
+        <div key={i} style={{ borderBottom: i < items.length-1 ? "1px solid rgba(255,255,255,.07)" : "none" }}>
+          <button className="faq-b" onClick={() => setOpen(open===i?null:i)} style={{ width:"100%", background:"#0a0a0f", border:"none", color:"#e5e7eb", fontFamily:"'DM Sans',sans-serif", fontSize:13, fontWeight:500, padding:"16px 22px", textAlign:"left", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", gap:16 }}>
+            <span>{item.q}</span>
+            <span style={{ background:GRAD, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", fontSize:20, transform:open===i?"rotate(45deg)":"rotate(0deg)", transition:"transform .25s", flexShrink:0, display:"inline-block", lineHeight:1 }}>+</span>
+          </button>
+          {open===i && <div style={{ background:"#0a0a0f", padding:"0 22px 16px", fontSize:12, color:"#6b7280", lineHeight:1.75 }}>{item.a}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Componente principal ──────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
 
   return (
-    <div style={s.page}>
+    <div style={{ background:"#050508", color:"#f0f0f0", fontFamily:"'DM Sans',sans-serif", minHeight:"100vh", overflowX:"hidden" }}>
 
-      {/* ── NAV ──────────────────────────────────────── */}
-      <nav style={s.nav}>
-        <div style={s.navLogo}>
-          Orçamentos<span style={s.accent}>PME</span>
-        </div>
-        <div style={s.navRight}>
-          <button style={s.btnNavLogin} onClick={() => navigate("/login")}>
-            Entrar
-          </button>
-          <button style={s.btnNavCta} onClick={() => navigate("/register")}>
-            Começar grátis
-          </button>
+      {/* NAV */}
+      <nav style={{ position:"sticky", top:0, zIndex:50, display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0 2rem", height:60, background:"rgba(5,5,8,.97)", borderBottom:"1px solid rgba(255,255,255,.07)", backdropFilter:"blur(12px)" }}>
+        <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:17, color:"#fff" }}>Orçamentos<GradText>PME</GradText></span>
+        <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+          <button onClick={() => navigate("/login")} style={{ background:"none", border:"none", color:"#9ca3af", fontSize:13, cursor:"pointer", padding:"8px 14px", fontFamily:"'DM Sans',sans-serif" }}>Entrar</button>
+          <button onClick={() => navigate("/register")} style={{ background:GRAD, border:"none", color:"#fff", fontSize:13, fontWeight:700, cursor:"pointer", padding:"8px 18px", borderRadius:6, fontFamily:"'DM Sans',sans-serif" }}>Começar grátis</button>
         </div>
       </nav>
 
-      {/* ── HERO ─────────────────────────────────────── */}
-      <section style={s.hero}>
-        <div style={s.heroGlow} />
-        <div style={s.heroGlow2} />
+      {/* HERO */}
+      <div style={{ maxWidth:1100, margin:"0 auto", padding:"0 2rem" }}>
+        <div className="hero-layout" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"3rem", minHeight:"90vh", position:"relative" }}>
 
-        <div className="fade-1" style={s.heroBadge}>
-          <span style={s.heroBadgeDot} />
-          Sistema de orçamentos para PMEs portuguesas
-        </div>
+          {/* Glow */}
+          <div style={{ position:"absolute", top:-200, left:"15%", width:600, height:600, borderRadius:"50%", background:"radial-gradient(circle,rgba(168,85,247,.1) 0%,rgba(236,72,153,.05) 50%,transparent 70%)", pointerEvents:"none", animation:"glowAnim 6s ease-in-out infinite" }} />
 
-        <h1 className="fade-2" style={s.heroH1}>
-          Chega de Word.<br />
-          Chega de Excel.<br />
-          <span style={s.heroH1Accent}>PDFs em 2 minutos.</span>
-        </h1>
-
-        <p className="fade-3" style={s.heroSub}>
-          O teu cliente recebe um orçamento profissional com o teu nome,
-          os serviços e os preços — direto do telemóvel, em menos de 2 minutos.
-        </p>
-
-        <div className="fade-4" style={s.heroActions}>
-          <button
-            className="btn-land-primary"
-            style={s.btnPrimary}
-            onClick={() => navigate("/register")}
-          >
-            Criar conta gratuita →
-          </button>
-          <button
-            className="btn-land-secondary"
-            style={s.btnSecondary}
-            onClick={() => navigate("/login")}
-          >
-            Já tenho conta
-          </button>
-        </div>
-
-        <div className="fade-5" style={s.heroProof}>
-          {["2 min por orçamento", "100% online", "IVA automático", "PDF profissional"].map((item) => (
-            <div key={item} style={s.proofItem}>
-              <span style={s.proofDot}>✓</span> {item}
+          {/* Texto esquerda */}
+          <div style={{ flex:1, maxWidth:520, position:"relative" }}>
+            <div className="f1" style={{ display:"inline-flex", alignItems:"center", gap:8, background:"rgba(168,85,247,.08)", border:"1px solid rgba(168,85,247,.2)", color:"#c084fc", fontSize:12, fontWeight:500, padding:"6px 16px", borderRadius:100, marginBottom:"1.5rem" }}>
+              <span style={{ width:6, height:6, borderRadius:"50%", background:"#a855f7", animation:"blink 2s infinite", flexShrink:0, display:"inline-block" }} />
+              Sistema de orçamentos para PMEs portuguesas
             </div>
-          ))}
-        </div>
-      </section>
 
-      {/* ── PARA QUEM É ──────────────────────────────── */}
-      <div style={s.paraQuemBar}>
-        {["Salões de beleza", "Barbearias", "Clínicas", "Consultores", "Spas", "Prestadores de serviços", "Empresas de obras"].map((item) => (
-          <span key={item} style={s.paraQuemItem}>{item}</span>
+            <h1 className="f2" style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(2.6rem,5vw,4rem)", fontWeight:800, lineHeight:1.05, letterSpacing:-2, marginBottom:"1.5rem", color:"#fff" }}>
+              Orçamentos<br />profissionais<br /><GradText>em 2 minutos</GradText>
+            </h1>
+
+            <p className="f3" style={{ fontSize:15, color:"#6b7280", lineHeight:1.75, marginBottom:"2rem" }}>
+              Sem Word. Sem Excel. Sem cálculos manuais.<br />
+              O teu cliente recebe um PDF com o teu nome — direto do telemóvel.
+            </p>
+
+            <div className="f4" style={{ display:"flex", gap:12, flexWrap:"wrap", marginBottom:"1.5rem" }}>
+              <button className="land-primary" onClick={() => navigate("/register")} style={{ background:GRAD, border:"none", color:"#fff", fontWeight:700, fontSize:14, padding:"14px 28px", borderRadius:8, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", boxShadow:"0 0 32px rgba(168,85,247,.25)", transition:"transform .2s, box-shadow .2s" }}>
+                Criar conta gratuita →
+              </button>
+              <button className="land-sec" onClick={() => navigate("/login")} style={{ background:"transparent", border:"1px solid rgba(255,255,255,.12)", color:"#d1d5db", fontWeight:500, fontSize:14, padding:"14px 28px", borderRadius:8, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", transition:"border-color .2s" }}>
+                Já tenho conta
+              </button>
+            </div>
+
+            <div className="f5" style={{ display:"flex", gap:"1.2rem", flexWrap:"wrap" }}>
+              {["Sem cartão","3 orçamentos grátis","Acesso imediato"].map(t => (
+                <span key={t} style={{ fontSize:12, color:"#4b5563" }}><GradText>✓</GradText> {t}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Mockups direita */}
+          <div className="hero-right" style={{ flex:1, position:"relative", height:500 }}>
+            <div className="mock-a"><PhoneMock img="/dashboardin.png" /></div>
+            <div className="mock-b"><PhoneMock img="/orcamentoin.png" /></div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* PARA QUEM */}
+      <div style={{ display:"flex", justifyContent:"center", gap:"1.5rem", flexWrap:"wrap", padding:"1.2rem 2rem", background:"#08080b", borderTop:"1px solid rgba(255,255,255,.05)", borderBottom:"1px solid rgba(255,255,255,.05)" }}>
+        {["Salões de beleza","Barbearias","Clínicas","Consultores","Spas","Empresas de serviços","Obras"].map(t => (
+          <span key={t} style={{ fontSize:12, color:"#374151", fontWeight:500 }}>{t}</span>
         ))}
       </div>
 
-      <hr style={s.divisor} />
+      <hr style={{ border:"none", borderTop:"1px solid rgba(255,255,255,.06)" }} />
 
-      {/* ── FUNCIONALIDADES ──────────────────────────── */}
-      <section style={s.seccao}>
-        <p style={s.tag}>Funcionalidades</p>
-        <h2 style={s.h2}>
-          Tudo o que precisas<br />
-          <span style={s.accent}>para fechar negócio</span>
+      {/* FEATURES */}
+      <section style={{ maxWidth:1060, margin:"0 auto", padding:"5rem 1.5rem" }}>
+        <SectionTag>Funcionalidades</SectionTag>
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(1.8rem,3.5vw,2.6rem)", fontWeight:800, letterSpacing:-1, lineHeight:1.1, color:"#fff", marginBottom:"0.75rem" }}>
+          Tudo o que precisas<br /><GradText>para fechar negócio</GradText>
         </h2>
-        <p style={s.sub}>Desenvolvido para PMEs que emitem orçamentos para serviços, tratamentos, obras ou consultorias.</p>
-
-        <div style={s.featGrid}>
-          {FEATURES.map((f) => (
-            <div key={f.titulo} className="feature-card-land" style={s.featCard}>
-              <div style={s.featIcon}>{f.icon}</div>
-              <div style={s.featTitulo}>{f.titulo}</div>
-              <div style={s.featDesc}>{f.desc}</div>
+        <p style={{ color:"#6b7280", fontSize:14, lineHeight:1.7, marginBottom:"2.5rem" }}>Desenvolvido para PMEs que emitem orçamentos para serviços, tratamentos ou obras.</p>
+        <div className="feat-grid-3" style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:1, background:"rgba(255,255,255,.05)", border:"1px solid rgba(255,255,255,.05)", borderRadius:14, overflow:"hidden" }}>
+          {FEATURES.map(f => (
+            <div key={f.t} className="feat-c" style={{ background:"#0a0a0f", padding:"1.75rem", transition:"background .2s" }}>
+              <div style={{ fontSize:26, marginBottom:10 }}>{f.icon}</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:14, fontWeight:700, color:"#fff", marginBottom:6 }}>{f.t}</div>
+              <div style={{ fontSize:12, color:"#6b7280", lineHeight:1.65 }}>{f.d}</div>
             </div>
           ))}
         </div>
       </section>
 
-      <hr style={s.divisor} />
+      <hr style={{ border:"none", borderTop:"1px solid rgba(255,255,255,.06)" }} />
 
-      {/* ── COMO FUNCIONA ────────────────────────────── */}
-      <section style={s.seccao}>
-        <p style={s.tag}>Primeiros passos</p>
-        <h2 style={s.h2}>
-          Do zero ao primeiro PDF<br />
-          <span style={s.accent}>em 5 minutos</span>
-        </h2>
-
-        <div style={s.passosGrid}>
-          {PASSOS.map((p) => (
-            <div key={p.n} className="step-land" style={s.passo}>
-              <div className="step-num-land" style={s.passoNum}>{p.n}</div>
-              <div>
-                <div style={s.passoTitulo}>{p.titulo}</div>
-                <div style={s.passoDesc}>{p.desc}</div>
+      {/* PLANOS */}
+      <section style={{ maxWidth:1060, margin:"0 auto", padding:"5rem 1.5rem" }}>
+        <SectionTag>Planos & Preços</SectionTag>
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(1.8rem,3.5vw,2.6rem)", fontWeight:800, letterSpacing:-1, lineHeight:1.1, color:"#fff", marginBottom:"0.75rem" }}>Escolhe o teu plano</h2>
+        <p style={{ color:"#6b7280", fontSize:14, lineHeight:1.7, marginBottom:"2.5rem" }}>Sem contratos. Pagamento por MB WAY ou Multibanco. Ativação imediata.</p>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))", gap:14 }}>
+          {PLANOS.map(p => (
+            <div key={p.id} className="plano-c" style={{ background: p.destaque?"#0f0a1a":"#0d0d12", border: p.destaque?"1px solid rgba(168,85,247,.45)":"1px solid rgba(255,255,255,.07)", borderRadius:14, padding:"1.75rem 1.25rem", position:"relative", overflow:"hidden", display:"flex", flexDirection:"column", transition:"transform .2s, border-color .2s" }}>
+              {p.destaque && <div style={{ position:"absolute", top:14, right:-26, background:GRAD, color:"#fff", fontSize:9, fontWeight:800, padding:"3px 38px", transform:"rotate(45deg)", letterSpacing:"0.06em" }}>MELHOR VALOR</div>}
+              <div style={{ fontSize:10, fontWeight:700, color:"#6b7280", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>{p.nome}</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:"2rem", fontWeight:800, color:"#fff", lineHeight:1, marginBottom:2 }}>
+                {p.preco}{p.per && <span style={{ fontSize:12, color:"#4b5563", fontWeight:400 }}> {p.per}</span>}
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <hr style={s.divisor} />
-
-      {/* ── PLANOS ───────────────────────────────────── */}
-      <section style={s.seccao}>
-        <p style={s.tag}>Planos & Preços</p>
-        <h2 style={s.h2}>Começa grátis.<br /><span style={s.accent}>Cresce quando precisares.</span></h2>
-        <p style={s.sub}>Sem contratos. Pagamento por MB WAY ou Multibanco. Ativação imediata.</p>
-
-        <div style={s.planosGrid}>
-          {PLANOS.map((plano) => (
-            <div
-              key={plano.id}
-              className="plano-card-land"
-              style={{
-                ...s.planoCard,
-                ...(plano.destaque ? s.planoCardDestaque : {}),
-              }}
-            >
-              {plano.destaque && <div style={s.ribbon}>MELHOR VALOR</div>}
-              <div style={s.planoNome}>{plano.nome}</div>
-              <div style={s.planoPreco}>
-                {plano.preco}
-                {plano.periodo && <span style={s.planoPeriodo}> {plano.periodo}</span>}
-              </div>
-              <div style={s.planoOrcs}>{plano.orcs}</div>
-              <p style={s.planoDesc}>{plano.desc}</p>
-              <ul style={s.planoFeats}>
-                {plano.features.map((f) => (
-                  <li key={f} style={s.planoFeatItem}>
-                    <span style={s.check}>✓</span>{f}
+              <div style={{ fontSize:12, fontWeight:700, background:GRAD, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", margin:"6px 0" }}>{p.orcs}</div>
+              <p style={{ fontSize:12, color:"#6b7280", lineHeight:1.6, marginBottom:16, flex:1 }}>{p.desc}</p>
+              <ul style={{ listStyle:"none", padding:0, margin:"0 0 20px", display:"flex", flexDirection:"column", gap:6 }}>
+                {p.feats.map(f => (
+                  <li key={f} style={{ fontSize:12, color:"#9ca3af", display:"flex", gap:8, alignItems:"flex-start" }}>
+                    <GradText>✓</GradText> {f}
                   </li>
                 ))}
               </ul>
-              <button
-                style={{
-                  ...s.planoBtnBase,
-                  ...(plano.destaque ? s.planoBtnDestaque : {}),
-                  ...(plano.id === "free" ? s.planoBtnFree : {}),
-                }}
-                onClick={() => navigate("/register")}
-              >
-                {plano.id === "free" ? "Começar grátis" : plano.id === "ilimitado" ? "Subscrever" : "Comprar"}
+              <button onClick={() => navigate("/register")} style={{ padding:"11px 0", background: p.destaque?GRAD:"rgba(255,255,255,.05)", border: p.destaque?"none":"1px solid rgba(255,255,255,.1)", borderRadius:8, color: p.destaque?"#fff":"#e5e7eb", fontWeight:600, fontSize:13, cursor:"pointer", width:"100%", fontFamily:"'DM Sans',sans-serif" }}>
+                {p.id==="free"?"Começar grátis":p.id==="ilimitado"?"Subscrever":"Comprar Agora"}
               </button>
             </div>
           ))}
         </div>
       </section>
 
-      <hr style={s.divisor} />
+      <hr style={{ border:"none", borderTop:"1px solid rgba(255,255,255,.06)" }} />
 
-      {/* ── CTA FINAL ────────────────────────────────── */}
-      <section style={s.ctaSection}>
-        <div style={s.ctaGlow} />
-        <p style={{ ...s.tag, textAlign: "center" }}>Começa hoje</p>
-        <h2 style={{ ...s.h2, textAlign: "center" }}>
-          Pronto para <span style={s.accent}>profissionalizar</span><br />
-          os teus orçamentos?
+      {/* FAQ */}
+      <section style={{ maxWidth:1060, margin:"0 auto", padding:"5rem 1.5rem" }}>
+        <SectionTag>Dúvidas Frequentes</SectionTag>
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(1.8rem,3.5vw,2.6rem)", fontWeight:800, letterSpacing:-1, lineHeight:1.1, color:"#fff", marginBottom:"0.75rem" }}>
+          Respostas <GradText>rápidas</GradText>
         </h2>
-        <p style={{ ...s.sub, textAlign: "center" }}>
-          Cria a tua conta agora e emite o primeiro PDF em menos de 5 minutos.<br />
-          Sem cartão de crédito. 3 orçamentos grátis. Acesso imediato.
-        </p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", position: "relative" }}>
-          <button
-            className="btn-land-primary"
-            style={s.btnPrimary}
-            onClick={() => navigate("/register")}
-          >
-            Criar conta gratuita →
-          </button>
-        </div>
+        <FaqList items={FAQ} />
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────── */}
-      <footer style={s.footer}>
-        <span style={s.footerLogo}>Orçamentos<span style={s.accent}>PME</span></span>
-        <span style={s.footerSub}>by Albiclick · contacto@albiclick.com</span>
-        <span style={s.footerSub}>© 2026</span>
+      {/* CTA */}
+      <section style={{ position:"relative", textAlign:"center", padding:"6rem 1.5rem", overflow:"hidden" }}>
+        <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)", width:600, height:400, background:"radial-gradient(ellipse,rgba(168,85,247,.1) 0%,transparent 70%)", pointerEvents:"none" }} />
+        <SectionTag>Começa hoje</SectionTag>
+        <h2 style={{ fontFamily:"'Syne',sans-serif", fontSize:"clamp(1.8rem,3.5vw,2.6rem)", fontWeight:800, letterSpacing:-1, lineHeight:1.1, color:"#fff", marginBottom:"0.75rem", position:"relative" }}>
+          Pronto para <GradText>profissionalizar</GradText><br />os teus orçamentos?
+        </h2>
+        <p style={{ color:"#6b7280", fontSize:14, lineHeight:1.7, marginBottom:"2rem", position:"relative" }}>
+          Cria a tua conta e emite o primeiro PDF em menos de 5 minutos.<br />
+          Sem cartão · 3 orçamentos grátis · Acesso imediato
+        </p>
+        <button className="land-primary" onClick={() => navigate("/register")} style={{ background:GRAD, border:"none", color:"#fff", fontWeight:700, fontSize:14, padding:"14px 32px", borderRadius:8, cursor:"pointer", fontFamily:"'DM Sans',sans-serif", boxShadow:"0 0 40px rgba(168,85,247,.3)", transition:"transform .2s, box-shadow .2s", position:"relative" }}>
+          Criar conta gratuita →
+        </button>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop:"1px solid rgba(255,255,255,.06)", padding:"1.5rem 2rem", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:12 }}>
+        <span style={{ fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:14, color:"#fff" }}>Orçamentos<GradText>PME</GradText></span>
+        <span style={{ fontSize:12, color:"#374151" }}>by Albiclick · contacto@albiclick.com</span>
+        <span style={{ fontSize:12, color:"#374151" }}>© 2026</span>
       </footer>
 
     </div>
   );
 }
-
-// ── Estilos ───────────────────────────────────────────────
-const ACCENT = "#00E5A0";
-const GRAD = `linear-gradient(135deg, ${ACCENT}, #00B87A)`;
-
-const s = {
-  page: {
-    background: "#0a0a0a",
-    color: "#F0F0F0",
-    fontFamily: "'DM Sans', sans-serif",
-    minHeight: "100vh",
-    overflowX: "hidden",
-  },
-  accent: {
-    color: ACCENT,
-  },
-
-  // NAV
-  nav: {
-    position: "sticky",
-    top: 0,
-    zIndex: 50,
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0 2rem",
-    height: 60,
-    background: "rgba(10,10,10,0.92)",
-    backdropFilter: "blur(12px)",
-    borderBottom: "1px solid #1a1a1a",
-  },
-  navLogo: {
-    fontFamily: "'Syne', sans-serif",
-    fontWeight: 800,
-    fontSize: 17,
-    color: "#fff",
-    letterSpacing: -0.5,
-  },
-  navRight: {
-    display: "flex",
-    gap: 10,
-    alignItems: "center",
-  },
-  btnNavLogin: {
-    background: "none",
-    border: "none",
-    color: "#888",
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: "pointer",
-    padding: "8px 14px",
-    fontFamily: "'DM Sans', sans-serif",
-  },
-  btnNavCta: {
-    background: ACCENT,
-    border: "none",
-    color: "#000",
-    fontSize: 13,
-    fontWeight: 700,
-    cursor: "pointer",
-    padding: "8px 18px",
-    borderRadius: 6,
-    fontFamily: "'DM Sans', sans-serif",
-  },
-
-  // HERO
-  hero: {
-    position: "relative",
-    minHeight: "92vh",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-    padding: "5rem 1.5rem 4rem",
-    overflow: "hidden",
-  },
-  heroGlow: {
-    position: "absolute",
-    top: -180,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: 700,
-    height: 700,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%)",
-    pointerEvents: "none",
-    animation: "glowPulse 6s ease-in-out infinite",
-  },
-  heroGlow2: {
-    position: "absolute",
-    bottom: -100,
-    right: "10%",
-    width: 400,
-    height: 400,
-    borderRadius: "50%",
-    background: "radial-gradient(circle, rgba(0,184,122,0.05) 0%, transparent 70%)",
-    pointerEvents: "none",
-  },
-  heroBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    background: "rgba(0,229,160,0.07)",
-    border: "1px solid rgba(0,229,160,0.18)",
-    color: ACCENT,
-    fontSize: 12,
-    fontWeight: 500,
-    letterSpacing: "0.05em",
-    padding: "6px 16px",
-    borderRadius: 100,
-    marginBottom: "2rem",
-    position: "relative",
-  },
-  heroBadgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    background: ACCENT,
-    animation: "blink 2s infinite",
-    flexShrink: 0,
-  },
-  heroH1: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "clamp(2.6rem, 6vw, 5rem)",
-    fontWeight: 800,
-    lineHeight: 1.04,
-    letterSpacing: -2,
-    marginBottom: "1.5rem",
-    color: "#fff",
-    position: "relative",
-  },
-  heroH1Accent: {
-    color: ACCENT,
-  },
-  heroSub: {
-    fontSize: "clamp(1rem, 2vw, 1.15rem)",
-    color: "#777",
-    maxWidth: 540,
-    lineHeight: 1.75,
-    marginBottom: "2.5rem",
-    position: "relative",
-  },
-  heroActions: {
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-    justifyContent: "center",
-    marginBottom: "2.5rem",
-    position: "relative",
-  },
-  btnPrimary: {
-    background: ACCENT,
-    border: "none",
-    color: "#000",
-    fontWeight: 700,
-    fontSize: 14,
-    padding: "14px 28px",
-    borderRadius: 8,
-    cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
-    boxShadow: "0 0 32px rgba(0,229,160,0.2)",
-    transition: "transform .2s, box-shadow .2s",
-  },
-  btnSecondary: {
-    background: "transparent",
-    border: "1px solid #333",
-    color: "#ddd",
-    fontWeight: 500,
-    fontSize: 14,
-    padding: "14px 28px",
-    borderRadius: 8,
-    cursor: "pointer",
-    fontFamily: "'DM Sans', sans-serif",
-    transition: "border-color .2s",
-  },
-  heroProof: {
-    display: "flex",
-    gap: "1.5rem",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    position: "relative",
-  },
-  proofItem: {
-    fontSize: 12,
-    color: "#555",
-    display: "flex",
-    alignItems: "center",
-    gap: 6,
-  },
-  proofDot: {
-    color: ACCENT,
-    fontWeight: 700,
-  },
-
-  // PARA QUEM
-  paraQuemBar: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "1.5rem",
-    flexWrap: "wrap",
-    padding: "1.5rem 2rem",
-    borderTop: "1px solid #141414",
-    borderBottom: "1px solid #141414",
-    background: "#0d0d0d",
-  },
-  paraQuemItem: {
-    fontSize: 12,
-    color: "#444",
-    fontWeight: 500,
-    letterSpacing: "0.04em",
-  },
-
-  // DIVISOR
-  divisor: {
-    border: "none",
-    borderTop: "1px solid #141414",
-  },
-
-  // SECÇÃO
-  seccao: {
-    maxWidth: 1080,
-    margin: "0 auto",
-    padding: "5rem 1.5rem",
-  },
-  tag: {
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase",
-    color: ACCENT,
-    marginBottom: "0.75rem",
-    display: "block",
-  },
-  h2: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "clamp(1.8rem, 4vw, 2.8rem)",
-    fontWeight: 800,
-    letterSpacing: -1,
-    lineHeight: 1.1,
-    marginBottom: "1rem",
-    color: "#fff",
-  },
-  sub: {
-    color: "#666",
-    fontSize: "0.95rem",
-    lineHeight: 1.7,
-    maxWidth: 520,
-    marginBottom: "3rem",
-  },
-
-  // FEATURES
-  featGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: 1,
-    background: "#141414",
-    border: "1px solid #141414",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  featCard: {
-    background: "#0f0f0f",
-    padding: "2rem",
-    transition: "background .2s",
-    cursor: "default",
-  },
-  featIcon: {
-    fontSize: 28,
-    marginBottom: "0.75rem",
-  },
-  featTitulo: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "0.95rem",
-    fontWeight: 700,
-    color: "#fff",
-    marginBottom: "0.5rem",
-  },
-  featDesc: {
-    fontSize: 13,
-    color: "#555",
-    lineHeight: 1.65,
-  },
-
-  // PASSOS
-  passosGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-    gap: 0,
-    borderTop: "1px solid #141414",
-  },
-  passo: {
-    display: "grid",
-    gridTemplateColumns: "56px 1fr",
-    gap: "1rem",
-    padding: "2rem 1rem",
-    borderBottom: "1px solid #141414",
-    alignItems: "flex-start",
-    cursor: "default",
-  },
-  passoNum: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "2.4rem",
-    fontWeight: 800,
-    color: "#1a1a1a",
-    lineHeight: 1,
-    transition: "color .3s",
-  },
-  passoTitulo: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "0.95rem",
-    fontWeight: 700,
-    color: "#fff",
-    marginBottom: "0.4rem",
-  },
-  passoDesc: {
-    fontSize: 13,
-    color: "#555",
-    lineHeight: 1.7,
-  },
-
-  // PLANOS
-  planosGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 14,
-  },
-  planoCard: {
-    background: "#0f0f0f",
-    border: "1px solid #1a1a1a",
-    borderRadius: 14,
-    padding: "1.75rem 1.25rem",
-    position: "relative",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    transition: "transform .2s, border-color .2s",
-    cursor: "default",
-  },
-  planoCardDestaque: {
-    border: "1px solid rgba(0,229,160,0.25)",
-    background: "#0a1410",
-  },
-  ribbon: {
-    position: "absolute",
-    top: 14,
-    right: -26,
-    background: GRAD,
-    color: "#000",
-    fontSize: 9,
-    fontWeight: 800,
-    padding: "3px 38px",
-    transform: "rotate(45deg)",
-    letterSpacing: "0.06em",
-  },
-  planoNome: {
-    fontSize: 10,
-    fontWeight: 700,
-    color: "#555",
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
-    marginBottom: 8,
-  },
-  planoPreco: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: "2rem",
-    fontWeight: 800,
-    color: "#fff",
-    lineHeight: 1,
-    marginBottom: 2,
-  },
-  planoPeriodo: {
-    fontSize: 12,
-    color: "#444",
-    fontWeight: 400,
-  },
-  planoOrcs: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: ACCENT,
-    margin: "6px 0",
-  },
-  planoDesc: {
-    fontSize: 12,
-    color: "#555",
-    lineHeight: 1.6,
-    marginBottom: 16,
-    flex: 1,
-  },
-  planoFeats: {
-    listStyle: "none",
-    padding: 0,
-    margin: "0 0 20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-  },
-  planoFeatItem: {
-    fontSize: 12,
-    color: "#555",
-    display: "flex",
-    gap: 8,
-    alignItems: "flex-start",
-  },
-  check: {
-    color: ACCENT,
-    fontWeight: 700,
-    flexShrink: 0,
-  },
-  planoBtnBase: {
-    padding: "10px 0",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid #222",
-    borderRadius: 8,
-    color: "#ccc",
-    fontWeight: 600,
-    fontSize: 13,
-    cursor: "pointer",
-    width: "100%",
-    fontFamily: "'DM Sans', sans-serif",
-    transition: "opacity .2s",
-  },
-  planoBtnDestaque: {
-    background: GRAD,
-    border: "none",
-    color: "#000",
-  },
-  planoBtnFree: {
-    border: "1px solid rgba(0,229,160,0.2)",
-    color: ACCENT,
-  },
-
-  // CTA
-  ctaSection: {
-    position: "relative",
-    textAlign: "center",
-    padding: "6rem 1.5rem",
-    overflow: "hidden",
-  },
-  ctaGlow: {
-    position: "absolute",
-    top: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
-    width: 600,
-    height: 400,
-    background: "radial-gradient(ellipse, rgba(0,229,160,0.06) 0%, transparent 70%)",
-    pointerEvents: "none",
-  },
-
-  // FOOTER
-  footer: {
-    borderTop: "1px solid #141414",
-    padding: "1.5rem 2rem",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  footerLogo: {
-    fontFamily: "'Syne', sans-serif",
-    fontWeight: 800,
-    fontSize: 14,
-    color: "#fff",
-  },
-  footerSub: {
-    fontSize: 12,
-    color: "#333",
-  },
-};
