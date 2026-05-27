@@ -20,6 +20,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/orcamentos", require("./routes/orcamentos"));
 app.use("/api/clientes", require("./routes/clientes"));
 app.use("/api/pagamentos", require("./routes/pagamentos"));
+app.use("/api/subscricao", require("./routes/subscricao")); // ← NOVO
 
 // HEALTH CHECK
 app.get("/api/health", (req, res) => {
@@ -27,6 +28,6 @@ app.get("/api/health", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Servidor a correr na porta ${PORT}`);
 });

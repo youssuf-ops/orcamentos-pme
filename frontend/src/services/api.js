@@ -52,7 +52,7 @@ export const apagarOrcamento = (id) => api.delete(`/orcamentos/${id}`);
 // ─── NOVO: SUBSCRIÇÃO ───────────────────────────────────────────
 // Devolve o estado actual do plano do utilizador autenticado:
 // { plano, orcamentosDisponiveis, orcamentosUsados, planoAtivo, dataFim }
-export const getSubscricao = () => api.get("/subscricao/minha");
+export const getSubscricao = () => api.get("/pagamentos/subscription");
 
 // ─── NOVO: PAGAMENTOS ───────────────────────────────────────────
 // Cria referência de pagamento na EuPago.
