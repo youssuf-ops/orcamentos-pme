@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Orcamento = require("../models/Orcamento");
 const auth = require("../middleware/auth");
-
+const checkPlano = require("../middleware/checkPlano");
 router.use(auth);
 
 // GET /api/orcamentos — listar todos
@@ -33,7 +33,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // POST /api/orcamentos — criar orçamento
-router.post("/", async (req, res) => {
+router.post("/", checkPlano, async (req, res) => {
   try {
     const { cliente, itens, iva, validade, notas } = req.body;
 
@@ -63,6 +63,12 @@ router.post("/", async (req, res) => {
     });
 
     await orcamento.save();
+
+    // Incrementar contador de orçamentos usados
+    if (req.subscription && req.subscription.orcamentosDisponiveis !== -1) {
+      req.subscription.orcamentosUsados += 1;
+      await req.subscription.save();
+    }
 
     const resultado = await Orcamento.findById(orcamento._id).populate(
       "cliente",

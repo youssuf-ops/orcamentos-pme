@@ -19,6 +19,17 @@ router.post("/register", async (req, res) => {
     const user = new User({ nome, email, password: hash, empresa });
     await user.save();
 
+    // Criar Subscription com plano free para o novo utilizador
+    const Subscription = require("../models/Subscription");
+    const subscription = new Subscription({
+      user: user._id,
+      plano: "free",
+      orcamentosDisponiveis: 3,
+      orcamentosUsados: 0,
+      planoAtivo: true,
+    });
+    await subscription.save();
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
