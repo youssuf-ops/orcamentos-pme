@@ -1,3 +1,7 @@
+// frontend/src/App.jsx
+// Alterações: rota / agora é a LandingPage pública
+// /dashboard redireciona utilizadores autenticados
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
@@ -6,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Clientes from "./pages/Clientes";
 import Orcamentos from "./pages/Orcamentos";
 import Pricing from "./pages/Pricing";
+import LandingPage from "./pages/LandingPage";
 
 function RotaProtegida({ children }) {
   const { user, loading } = useAuth();
@@ -21,8 +26,12 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Pública — qualquer pessoa vê */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Protegidas — exigem login */}
           <Route
             path="/dashboard"
             element={
@@ -55,7 +64,6 @@ function App() {
               </RotaProtegida>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
