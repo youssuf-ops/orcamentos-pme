@@ -53,9 +53,8 @@ export default function Orcamentos() {
     carregarDados();
   }, []);
 
-  const handleDadosChange = (e) => {
+  const handleDadosChange = (e) =>
     setDados({ ...dados, [e.target.name]: e.target.value });
-  };
 
   const handleItemChange = (index, campo, valor) => {
     const novosItens = [...itens];
@@ -63,18 +62,14 @@ export default function Orcamentos() {
     setItens(novosItens);
   };
 
-  const adicionarItem = () => {
+  const adicionarItem = () =>
     setItens([...itens, { descricao: "", quantidade: 1, precoUnitario: 0 }]);
-  };
-
-  const removerItem = (index) => {
-    setItens(itens.filter((_, i) => i !== index));
-  };
+  const removerItem = (index) => setItens(itens.filter((_, i) => i !== index));
 
   const calcularTotal = () => {
     const subtotal = itens.reduce(
       (acc, item) => acc + item.quantidade * item.precoUnitario,
-      0
+      0,
     );
     return (subtotal * (1 + dados.iva / 100)).toFixed(2);
   };
@@ -88,7 +83,7 @@ export default function Orcamentos() {
       setMostrarForm(false);
       carregarDados();
     } catch {
-      setErro("Erro ao criar orçamento.");
+      setErro("Erro ao criar orcamento.");
     }
   };
 
@@ -107,166 +102,228 @@ export default function Orcamentos() {
       await apagarOrcamento(id);
       carregarDados();
     } catch {
-      setErro("Erro ao apagar orçamento.");
+      setErro("Erro ao apagar orcamento.");
     }
   };
 
   const gerarPDF = (orcamento) => {
     const userGuardado = JSON.parse(localStorage.getItem("user") || "{}");
-    const subscricaoGuardada = JSON.parse(localStorage.getItem("subscricao") || "{}");
-    const isPlanoFree = !subscricaoGuardada.plano || subscricaoGuardada.plano === "free";
+    const subscricaoGuardada = JSON.parse(
+      localStorage.getItem("subscricao") || "{}",
+    );
+    const isPlanoFree =
+      !subscricaoGuardada.plano || subscricaoGuardada.plano === "free";
 
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4",
+    });
     const W = doc.internal.pageSize.getWidth();
+    const EUR = "EUR ";
 
     const AZUL = [37, 99, 235];
     const ESCURO = [26, 26, 46];
     const CINZA = [107, 114, 128];
-    const CLARO = [243, 244, 246];
+    const CINZA_CLARO = [243, 244, 246];
 
-    // CABEÇALHO — faixa azul
+    // CABECALHO
     doc.setFillColor(...AZUL);
-    doc.rect(0, 0, W, 40, "F");
+    doc.rect(0, 0, W, 38, "F");
 
-    doc.setFontSize(16);
+    doc.setFontSize(18);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text(userGuardado.empresa || userGuardado.nome || "A tua empresa", 14, 16);
+    doc.text(
+      userGuardado.empresa || userGuardado.nome || "A tua empresa",
+      14,
+      16,
+    );
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("ORCAMENTO", W - 14, 12, { align: "right" });
-    doc.setFontSize(14);
+    doc.text("ORCAMENTO", W - 14, 11, { align: "right" });
+
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
-    doc.text(orcamento.numero || "", W - 14, 22, { align: "right" });
+    doc.text(orcamento.numero || "", W - 14, 20, { align: "right" });
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text(
       "Data: " + new Date(orcamento.createdAt).toLocaleDateString("pt-PT"),
-      W - 14, 30, { align: "right" }
+      W - 14,
+      28,
+      { align: "right" },
     );
     if (orcamento.validade) {
       doc.text(
         "Validade: " + new Date(orcamento.validade).toLocaleDateString("pt-PT"),
-        W - 14, 36, { align: "right" }
+        W - 14,
+        34,
+        { align: "right" },
       );
     }
 
     // EMITENTE
-    let y = 52;
-    doc.setFontSize(8);
+    let y = 50;
+    doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...CINZA);
     doc.text("EMITIDO POR", 14, y);
     y += 5;
-    doc.setFont("helvetica", "normal");
     doc.setTextColor(...ESCURO);
     doc.setFontSize(9);
     if (userGuardado.empresa) {
       doc.setFont("helvetica", "bold");
-      doc.text(userGuardado.empresa, 14, y); y += 5;
-      doc.setFont("helvetica", "normal");
+      doc.text(userGuardado.empresa, 14, y);
+      y += 5;
     }
-    if (userGuardado.nome) { doc.text(userGuardado.nome, 14, y); y += 5; }
-    if (userGuardado.nif) { doc.text("NIF: " + userGuardado.nif, 14, y); y += 5; }
-    if (userGuardado.morada) { doc.text(userGuardado.morada, 14, y); y += 5; }
-    if (userGuardado.telefone) { doc.text("Tel: " + userGuardado.telefone, 14, y); y += 5; }
-    if (userGuardado.email) { doc.text(userGuardado.email, 14, y); y += 5; }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    if (userGuardado.nome) {
+      doc.text(userGuardado.nome, 14, y);
+      y += 4;
+    }
+    if (userGuardado.nif) {
+      doc.text("NIF: " + userGuardado.nif, 14, y);
+      y += 4;
+    }
+    if (userGuardado.morada) {
+      doc.text(userGuardado.morada, 14, y);
+      y += 4;
+    }
+    if (userGuardado.telefone) {
+      doc.text("Tel: " + userGuardado.telefone, 14, y);
+      y += 4;
+    }
+    if (userGuardado.email) {
+      doc.text(userGuardado.email, 14, y);
+      y += 4;
+    }
 
     // CLIENTE
-    let yc = 52;
-    doc.setFontSize(8);
+    const xCliente = W / 2 + 5;
+    let yc = 50;
+    doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...CINZA);
-    doc.text("DESTINATARIO", W / 2, yc);
+    doc.text("DESTINATARIO", xCliente, yc);
     yc += 5;
-    doc.setFont("helvetica", "normal");
     doc.setTextColor(...ESCURO);
     doc.setFontSize(9);
     const cliente = orcamento.cliente;
     if (cliente?.nome) {
       doc.setFont("helvetica", "bold");
-      doc.text(cliente.nome, W / 2, yc); yc += 5;
-      doc.setFont("helvetica", "normal");
+      doc.text(cliente.nome, xCliente, yc);
+      yc += 5;
     }
-    if (cliente?.nif) { doc.text("NIF: " + cliente.nif, W / 2, yc); yc += 5; }
-    if (cliente?.morada) { doc.text(cliente.morada, W / 2, yc); yc += 5; }
-    if (cliente?.telefone) { doc.text("Tel: " + cliente.telefone, W / 2, yc); yc += 5; }
-    if (cliente?.email) { doc.text(cliente.email, W / 2, yc); yc += 5; }
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    if (cliente?.nif) {
+      doc.text("NIF: " + cliente.nif, xCliente, yc);
+      yc += 4;
+    }
+    if (cliente?.morada) {
+      doc.text(cliente.morada, xCliente, yc);
+      yc += 4;
+    }
+    if (cliente?.telefone) {
+      doc.text("Tel: " + cliente.telefone, xCliente, yc);
+      yc += 4;
+    }
+    if (cliente?.email) {
+      doc.text(cliente.email, xCliente, yc);
+      yc += 4;
+    }
 
-    // LINHA SEPARADORA
-    const yLinha = Math.max(y, yc) + 6;
-    doc.setDrawColor(...CLARO);
-    doc.setLineWidth(0.5);
+    // LINHA DIVISORIA
+    const yLinha = Math.max(y, yc) + 4;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
     doc.line(14, yLinha, W - 14, yLinha);
 
-    // TABELA DE ITENS
+    // TABELA — larguras calibradas para A4 (190mm utilizaveis)
+    // N=8 | Descricao=82 | Qtd=10 | Preco=24 | IVA=22 | Total=24 = 170 + margens
+    // Substituir o autoTable inteiro por:
     autoTable(doc, {
-      startY: yLinha + 6,
-      head: [["N", "Descricao", "Qtd", "Preco Unit.", "IVA " + orcamento.iva + "%", "Total"]],
+      startY: yLinha + 5,
+      margin: { left: 14, right: 14 },
+      tableWidth: 182,
+      head: [["N", "Descricao", "Qtd", "Unit.", "IVA", "Total"]],
       body: orcamento.itens.map((item, i) => [
         String(i + 1).padStart(2, "0"),
         item.descricao,
         item.quantidade,
-        "EUR " + item.precoUnitario.toFixed(2),
-        "EUR " + (item.precoUnitario * item.quantidade * (orcamento.iva / 100)).toFixed(2),
-        "EUR " + item.total.toFixed(2),
+        EUR + item.precoUnitario.toFixed(2),
+        EUR +
+          (
+            item.precoUnitario *
+            item.quantidade *
+            (orcamento.iva / 100)
+          ).toFixed(2),
+        EUR + item.total.toFixed(2),
       ]),
       styles: {
-        fontSize: 9,
-        cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
+        fontSize: 8,
+        cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+        overflow: "linebreak",
+        valign: "middle",
       },
       headStyles: {
         fillColor: AZUL,
         textColor: 255,
         fontStyle: "bold",
         fontSize: 8,
+        halign: "center",
       },
-      alternateRowStyles: {
-        fillColor: [249, 250, 251],
-      },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: "auto" },
-        2: { cellWidth: 14, halign: "center" },
-        3: { cellWidth: 26, halign: "right" },
+        0: { cellWidth: 10, halign: "center" },
+        1: { cellWidth: 90, halign: "left" },
+        2: { cellWidth: 12, halign: "center" },
+        3: { cellWidth: 24, halign: "right" },
         4: { cellWidth: 22, halign: "right" },
-        5: { cellWidth: 26, halign: "right" },
+        5: { cellWidth: 24, halign: "right" },
       },
     });
-
     // TOTAIS
-    const finalY = doc.lastAutoTable.finalY + 8;
+    const finalY = doc.lastAutoTable.finalY + 6;
 
-    doc.setFillColor(...CLARO);
-    doc.roundedRect(W - 80, finalY, 66, 36, 3, 3, "F");
+    doc.setFillColor(...CINZA_CLARO);
+    doc.roundedRect(W - 76, finalY, 62, 30, 2, 2, "F");
 
-    doc.setFontSize(9);
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(...CINZA);
-    doc.text("Subtotal:", W - 75, finalY + 9);
-    doc.text("IVA (" + orcamento.iva + "%):", W - 75, finalY + 18);
-
+    doc.text("Subtotal:", W - 72, finalY + 8);
+    doc.text("IVA (" + orcamento.iva + "%):", W - 72, finalY + 16);
     doc.setTextColor(...ESCURO);
-    doc.text("EUR " + orcamento.subtotal?.toFixed(2), W - 17, finalY + 9, { align: "right" });
+    doc.text(EUR + orcamento.subtotal?.toFixed(2), W - 16, finalY + 8, {
+      align: "right",
+    });
     doc.text(
-      "EUR " + (orcamento.total - orcamento.subtotal).toFixed(2),
-      W - 17, finalY + 18, { align: "right" }
+      EUR + (orcamento.total - orcamento.subtotal).toFixed(2),
+      W - 16,
+      finalY + 16,
+      { align: "right" },
     );
 
-    // Total em destaque
+    // Total destaque
     doc.setFillColor(...AZUL);
-    doc.roundedRect(W - 80, finalY + 22, 66, 14, 3, 3, "F");
-    doc.setFontSize(11);
+    doc.roundedRect(W - 76, finalY + 20, 62, 12, 2, 2, "F");
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text("TOTAL:", W - 75, finalY + 31);
-    doc.text("EUR " + orcamento.total?.toFixed(2), W - 17, finalY + 31, { align: "right" });
+    doc.text("TOTAL:", W - 72, finalY + 28);
+    doc.text(EUR + orcamento.total?.toFixed(2), W - 16, finalY + 28, {
+      align: "right",
+    });
 
-    // TERMOS E CONDIÇÕES / NOTAS
+    // TERMOS E CONDICOES
     if (orcamento.notas) {
-      const yTermos = finalY + 44;
-      doc.setFontSize(8);
+      const yTermos = finalY + 38;
+      doc.setFontSize(7);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...CINZA);
       doc.text("TERMOS E CONDICOES", 14, yTermos);
@@ -274,18 +331,28 @@ export default function Orcamentos() {
       doc.setTextColor(...ESCURO);
       doc.setFontSize(8);
       const linhas = doc.splitTextToSize(orcamento.notas, W - 28);
-      doc.text(linhas, 14, yTermos + 6);
+      doc.text(linhas, 14, yTermos + 5);
     }
 
-    // WATERMARK — só no plano free
+    // RODAPE — agradecimento
+    const yRodape = doc.internal.pageSize.getHeight() - 14;
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(14, yRodape - 4, W - 14, yRodape - 4);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(...CINZA);
+    doc.text("Obrigado pela preferencia!", W / 2, yRodape, { align: "center" });
+
+    // WATERMARK — so no plano free
     if (isPlanoFree) {
-      const yRodape = doc.internal.pageSize.getHeight() - 8;
       doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(...CINZA);
       doc.text(
         "Gerado gratuitamente com OrcamentosPME | orcamentos.albiclick.com",
-        W / 2, yRodape, { align: "center" }
+        W / 2,
+        yRodape + 5,
+        { align: "center" },
       );
     }
 
@@ -298,7 +365,10 @@ export default function Orcamentos() {
         <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
           OrcamentosPME
         </h2>
-        <button style={styles.botaoVoltar} onClick={() => navigate("/dashboard")}>
+        <button
+          style={styles.botaoVoltar}
+          onClick={() => navigate("/dashboard")}
+        >
           Dashboard
         </button>
       </nav>
@@ -384,7 +454,7 @@ export default function Orcamentos() {
                   />
                   <input
                     style={{ ...styles.input, flex: 1 }}
-                    placeholder="Preco EUR"
+                    placeholder="Preco"
                     type="number"
                     value={item.precoUnitario}
                     onChange={(e) =>
@@ -408,7 +478,11 @@ export default function Orcamentos() {
                 </div>
               ))}
 
-              <button type="button" style={styles.botaoAddItem} onClick={adicionarItem}>
+              <button
+                type="button"
+                style={styles.botaoAddItem}
+                onClick={adicionarItem}
+              >
                 + Adicionar Item
               </button>
 
@@ -419,7 +493,11 @@ export default function Orcamentos() {
               <div style={styles.campo}>
                 <label style={styles.label}>Notas / Termos e Condicoes</label>
                 <textarea
-                  style={{ ...styles.input, height: "80px", resize: "vertical" }}
+                  style={{
+                    ...styles.input,
+                    height: "80px",
+                    resize: "vertical",
+                  }}
                   name="notas"
                   value={dados.notas}
                   onChange={handleDadosChange}
@@ -437,7 +515,9 @@ export default function Orcamentos() {
         {loading ? (
           <p style={styles.mensagem}>A carregar...</p>
         ) : orcamentos.length === 0 ? (
-          <p style={styles.mensagem}>Ainda nao tens orcamentos. Cria o primeiro!</p>
+          <p style={styles.mensagem}>
+            Ainda nao tens orcamentos. Cria o primeiro!
+          </p>
         ) : (
           <div style={styles.lista}>
             {orcamentos.map((o) => (
