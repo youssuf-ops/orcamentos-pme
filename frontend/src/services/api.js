@@ -68,4 +68,13 @@ export const criarPagamento = (plano, metodo, telefone = null) =>
 export const verificarPagamento = (referencia) =>
   api.get(`/pagamentos/estado/${referencia}`);
 
+// ─── PERFIL DO UTILIZADOR ────────────────────────────────
+// Devolve os dados completos do utilizador autenticado
+// incluindo empresa, NIF, morada e telefone
+export const getPerfil = () => api.get("/auth/perfil");
+
+// Actualiza os dados do perfil — nome, empresa, NIF, morada, telefone
+// Não permite alterar email nem password
+export const atualizarPerfil = (dados) => api.put("/auth/perfil", dados);
+
 export default api;

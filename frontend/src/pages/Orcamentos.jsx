@@ -74,7 +74,7 @@ export default function Orcamentos() {
   const calcularTotal = () => {
     const subtotal = itens.reduce(
       (acc, item) => acc + item.quantidade * item.precoUnitario,
-      0,
+      0
     );
     return (subtotal * (1 + dados.iva / 100)).toFixed(2);
   };
@@ -112,64 +112,184 @@ export default function Orcamentos() {
   };
 
   const gerarPDF = (orcamento) => {
+    const userGuardado = JSON.parse(localStorage.getItem("user") || "{}");
+    const subscricaoGuardada = JSON.parse(localStorage.getItem("subscricao") || "{}");
+    const isPlanoFree = !subscricaoGuardada.plano || subscricaoGuardada.plano === "free";
+
     const doc = new jsPDF();
+    const W = doc.internal.pageSize.getWidth();
 
-    // Cabeçalho
-    doc.setFontSize(20);
-    doc.setTextColor(26, 26, 46);
-    doc.text("ORÇAMENTO", 14, 20);
+    const AZUL = [37, 99, 235];
+    const ESCURO = [26, 26, 46];
+    const CINZA = [107, 114, 128];
+    const CLARO = [243, 244, 246];
 
-    doc.setFontSize(12);
-    doc.setTextColor(100);
-    doc.text(`Número: ${orcamento.numero}`, 14, 30);
+    // CABEÇALHO — faixa azul
+    doc.setFillColor(...AZUL);
+    doc.rect(0, 0, W, 40, "F");
+
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text(userGuardado.empresa || userGuardado.nome || "A tua empresa", 14, 16);
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("ORCAMENTO", W - 14, 12, { align: "right" });
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text(orcamento.numero || "", W - 14, 22, { align: "right" });
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
     doc.text(
-      `Data: ${new Date(orcamento.createdAt).toLocaleDateString("pt-PT")}`,
-      14,
-      37,
+      "Data: " + new Date(orcamento.createdAt).toLocaleDateString("pt-PT"),
+      W - 14, 30, { align: "right" }
     );
-    doc.text(`Cliente: ${orcamento.cliente?.nome}`, 14, 44);
     if (orcamento.validade) {
       doc.text(
-        `Válido até: ${new Date(orcamento.validade).toLocaleDateString("pt-PT")}`,
-        14,
-        51,
+        "Validade: " + new Date(orcamento.validade).toLocaleDateString("pt-PT"),
+        W - 14, 36, { align: "right" }
       );
     }
 
-    // Tabela de itens
+    // EMITENTE
+    let y = 52;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...CINZA);
+    doc.text("EMITIDO POR", 14, y);
+    y += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...ESCURO);
+    doc.setFontSize(9);
+    if (userGuardado.empresa) {
+      doc.setFont("helvetica", "bold");
+      doc.text(userGuardado.empresa, 14, y); y += 5;
+      doc.setFont("helvetica", "normal");
+    }
+    if (userGuardado.nome) { doc.text(userGuardado.nome, 14, y); y += 5; }
+    if (userGuardado.nif) { doc.text("NIF: " + userGuardado.nif, 14, y); y += 5; }
+    if (userGuardado.morada) { doc.text(userGuardado.morada, 14, y); y += 5; }
+    if (userGuardado.telefone) { doc.text("Tel: " + userGuardado.telefone, 14, y); y += 5; }
+    if (userGuardado.email) { doc.text(userGuardado.email, 14, y); y += 5; }
+
+    // CLIENTE
+    let yc = 52;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...CINZA);
+    doc.text("DESTINATARIO", W / 2, yc);
+    yc += 5;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...ESCURO);
+    doc.setFontSize(9);
+    const cliente = orcamento.cliente;
+    if (cliente?.nome) {
+      doc.setFont("helvetica", "bold");
+      doc.text(cliente.nome, W / 2, yc); yc += 5;
+      doc.setFont("helvetica", "normal");
+    }
+    if (cliente?.nif) { doc.text("NIF: " + cliente.nif, W / 2, yc); yc += 5; }
+    if (cliente?.morada) { doc.text(cliente.morada, W / 2, yc); yc += 5; }
+    if (cliente?.telefone) { doc.text("Tel: " + cliente.telefone, W / 2, yc); yc += 5; }
+    if (cliente?.email) { doc.text(cliente.email, W / 2, yc); yc += 5; }
+
+    // LINHA SEPARADORA
+    const yLinha = Math.max(y, yc) + 6;
+    doc.setDrawColor(...CLARO);
+    doc.setLineWidth(0.5);
+    doc.line(14, yLinha, W - 14, yLinha);
+
+    // TABELA DE ITENS
     autoTable(doc, {
-      startY: 60,
-      head: [["Descrição", "Qtd", "Preço Unit.", "Total"]],
-      body: orcamento.itens.map((item) => [
+      startY: yLinha + 6,
+      head: [["N", "Descricao", "Qtd", "Preco Unit.", "IVA " + orcamento.iva + "%", "Total"]],
+      body: orcamento.itens.map((item, i) => [
+        String(i + 1).padStart(2, "0"),
         item.descricao,
         item.quantidade,
-        `€${item.precoUnitario.toFixed(2)}`,
-        `€${item.total.toFixed(2)}`,
+        "EUR " + item.precoUnitario.toFixed(2),
+        "EUR " + (item.precoUnitario * item.quantidade * (orcamento.iva / 100)).toFixed(2),
+        "EUR " + item.total.toFixed(2),
       ]),
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [37, 99, 235] },
+      styles: {
+        fontSize: 9,
+        cellPadding: { top: 6, right: 8, bottom: 6, left: 8 },
+      },
+      headStyles: {
+        fillColor: AZUL,
+        textColor: 255,
+        fontStyle: "bold",
+        fontSize: 8,
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251],
+      },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 14, halign: "center" },
+        3: { cellWidth: 26, halign: "right" },
+        4: { cellWidth: 22, halign: "right" },
+        5: { cellWidth: 26, halign: "right" },
+      },
     });
 
-    const finalY = doc.lastAutoTable.finalY + 10;
-    doc.setFontSize(11);
-    doc.setTextColor(50);
-    doc.text(`Subtotal: €${orcamento.subtotal?.toFixed(2)}`, 140, finalY);
-    doc.text(
-      `IVA (${orcamento.iva}%): €${(orcamento.total - orcamento.subtotal).toFixed(2)}`,
-      140,
-      finalY + 7,
-    );
-    doc.setFontSize(13);
-    doc.setTextColor(26, 26, 46);
-    doc.text(`Total: €${orcamento.total?.toFixed(2)}`, 140, finalY + 16);
+    // TOTAIS
+    const finalY = doc.lastAutoTable.finalY + 8;
 
+    doc.setFillColor(...CLARO);
+    doc.roundedRect(W - 80, finalY, 66, 36, 3, 3, "F");
+
+    doc.setFontSize(9);
+    doc.setTextColor(...CINZA);
+    doc.text("Subtotal:", W - 75, finalY + 9);
+    doc.text("IVA (" + orcamento.iva + "%):", W - 75, finalY + 18);
+
+    doc.setTextColor(...ESCURO);
+    doc.text("EUR " + orcamento.subtotal?.toFixed(2), W - 17, finalY + 9, { align: "right" });
+    doc.text(
+      "EUR " + (orcamento.total - orcamento.subtotal).toFixed(2),
+      W - 17, finalY + 18, { align: "right" }
+    );
+
+    // Total em destaque
+    doc.setFillColor(...AZUL);
+    doc.roundedRect(W - 80, finalY + 22, 66, 14, 3, 3, "F");
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text("TOTAL:", W - 75, finalY + 31);
+    doc.text("EUR " + orcamento.total?.toFixed(2), W - 17, finalY + 31, { align: "right" });
+
+    // TERMOS E CONDIÇÕES / NOTAS
     if (orcamento.notas) {
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text(`Notas: ${orcamento.notas}`, 14, finalY + 30);
+      const yTermos = finalY + 44;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...CINZA);
+      doc.text("TERMOS E CONDICOES", 14, yTermos);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...ESCURO);
+      doc.setFontSize(8);
+      const linhas = doc.splitTextToSize(orcamento.notas, W - 28);
+      doc.text(linhas, 14, yTermos + 6);
     }
 
-    doc.save(`${orcamento.numero}.pdf`);
+    // WATERMARK — só no plano free
+    if (isPlanoFree) {
+      const yRodape = doc.internal.pageSize.getHeight() - 8;
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...CINZA);
+      doc.text(
+        "Gerado gratuitamente com OrcamentosPME | orcamentos.albiclick.com",
+        W / 2, yRodape, { align: "center" }
+      );
+    }
+
+    doc.save((orcamento.numero || "orcamento") + ".pdf");
   };
 
   return (
@@ -178,22 +298,19 @@ export default function Orcamentos() {
         <h2 style={styles.logo} onClick={() => navigate("/dashboard")}>
           OrcamentosPME
         </h2>
-        <button
-          style={styles.botaoVoltar}
-          onClick={() => navigate("/dashboard")}
-        >
-          ← Dashboard
+        <button style={styles.botaoVoltar} onClick={() => navigate("/dashboard")}>
+          Dashboard
         </button>
       </nav>
 
       <div style={styles.conteudo}>
         <div style={styles.header}>
-          <h1 style={styles.titulo}>Orçamentos</h1>
+          <h1 style={styles.titulo}>Orcamentos</h1>
           <button
             style={styles.botaoNovo}
             onClick={() => setMostrarForm(!mostrarForm)}
           >
-            {mostrarForm ? "Cancelar" : "+ Novo Orçamento"}
+            {mostrarForm ? "Cancelar" : "+ Novo Orcamento"}
           </button>
         </div>
 
@@ -201,7 +318,7 @@ export default function Orcamentos() {
 
         {mostrarForm && (
           <div style={styles.card}>
-            <h3 style={styles.cardTitulo}>Novo Orçamento</h3>
+            <h3 style={styles.cardTitulo}>Novo Orcamento</h3>
             <form onSubmit={handleSubmit}>
               <div style={styles.grid2}>
                 <div style={styles.campo}>
@@ -243,12 +360,12 @@ export default function Orcamentos() {
                 </div>
               </div>
 
-              <h4 style={styles.secaoTitulo}>Itens do Orçamento</h4>
+              <h4 style={styles.secaoTitulo}>Itens do Orcamento</h4>
               {itens.map((item, index) => (
                 <div key={index} style={styles.itemLinha}>
                   <input
                     style={{ ...styles.input, flex: 3 }}
-                    placeholder="Descrição"
+                    placeholder="Descricao"
                     value={item.descricao}
                     onChange={(e) =>
                       handleItemChange(index, "descricao", e.target.value)
@@ -267,7 +384,7 @@ export default function Orcamentos() {
                   />
                   <input
                     style={{ ...styles.input, flex: 1 }}
-                    placeholder="Preço €"
+                    placeholder="Preco EUR"
                     type="number"
                     value={item.precoUnitario}
                     onChange={(e) =>
@@ -277,7 +394,7 @@ export default function Orcamentos() {
                     step="0.01"
                   />
                   <span style={styles.itemTotal}>
-                    €{(item.quantidade * item.precoUnitario).toFixed(2)}
+                    EUR {(item.quantidade * item.precoUnitario).toFixed(2)}
                   </span>
                   {itens.length > 1 && (
                     <button
@@ -285,40 +402,33 @@ export default function Orcamentos() {
                       style={styles.botaoRemover}
                       onClick={() => removerItem(index)}
                     >
-                      ✕
+                      X
                     </button>
                   )}
                 </div>
               ))}
 
-              <button
-                type="button"
-                style={styles.botaoAddItem}
-                onClick={adicionarItem}
-              >
+              <button type="button" style={styles.botaoAddItem} onClick={adicionarItem}>
                 + Adicionar Item
               </button>
 
               <div style={styles.totalBox}>
-                <strong>Total com IVA: €{calcularTotal()}</strong>
+                <strong>Total com IVA: EUR {calcularTotal()}</strong>
               </div>
 
               <div style={styles.campo}>
-                <label style={styles.label}>Notas</label>
+                <label style={styles.label}>Notas / Termos e Condicoes</label>
                 <textarea
-                  style={{
-                    ...styles.input,
-                    height: "80px",
-                    resize: "vertical",
-                  }}
+                  style={{ ...styles.input, height: "80px", resize: "vertical" }}
                   name="notas"
                   value={dados.notas}
                   onChange={handleDadosChange}
+                  placeholder="Ex: Pagamento 50% adjudicacao, 50% entrega. Validade 30 dias."
                 />
               </div>
 
               <button style={styles.botaoGuardar} type="submit">
-                Criar Orçamento
+                Criar Orcamento
               </button>
             </form>
           </div>
@@ -327,9 +437,7 @@ export default function Orcamentos() {
         {loading ? (
           <p style={styles.mensagem}>A carregar...</p>
         ) : orcamentos.length === 0 ? (
-          <p style={styles.mensagem}>
-            Ainda não tens orçamentos. Cria o primeiro!
-          </p>
+          <p style={styles.mensagem}>Ainda nao tens orcamentos. Cria o primeiro!</p>
         ) : (
           <div style={styles.lista}>
             {orcamentos.map((o) => (
@@ -350,14 +458,14 @@ export default function Orcamentos() {
                   </span>
                 </div>
                 <div style={styles.orcamentoInfo}>
-                  <span style={styles.total}>€{o.total?.toFixed(2)}</span>
+                  <span style={styles.total}>EUR {o.total?.toFixed(2)}</span>
                   <span style={styles.data}>
                     {new Date(o.createdAt).toLocaleDateString("pt-PT")}
                   </span>
                 </div>
                 <div style={styles.acoes}>
                   <button style={styles.botaoPDF} onClick={() => gerarPDF(o)}>
-                    📄 PDF
+                    PDF
                   </button>
                   {o.status === "pendente" && (
                     <>
@@ -535,6 +643,15 @@ const styles = {
   total: { fontSize: "20px", fontWeight: "700", color: "#1a1a2e" },
   data: { color: "#666", fontSize: "14px" },
   acoes: { display: "flex", gap: "8px" },
+  botaoPDF: {
+    padding: "6px 14px",
+    backgroundColor: "#1a1a2e",
+    color: "#fff",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "13px",
+  },
   botaoAprovar: {
     padding: "6px 14px",
     backgroundColor: "#16a34a",
