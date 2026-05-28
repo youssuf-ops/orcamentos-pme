@@ -27,7 +27,8 @@ const validarCodigoPostal = (cp) => {
 };
 
 const validarNome = (nome) => {
-  if (!nome || nome.trim().length < 2) return "Nome deve ter pelo menos 2 caracteres.";
+  if (!nome || nome.trim().length < 2)
+    return "Nome deve ter pelo menos 2 caracteres.";
   return "";
 };
 
@@ -138,7 +139,10 @@ export default function Perfil() {
         setUser((prev) => ({ ...prev, ...res.data }));
       }
       const userActual = JSON.parse(localStorage.getItem("user") || "{}");
-      localStorage.setItem("user", JSON.stringify({ ...userActual, ...res.data }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...userActual, ...res.data }),
+      );
       setSucesso(true);
     } catch {
       setErro("Erro ao guardar perfil. Tenta novamente.");
@@ -150,7 +154,9 @@ export default function Perfil() {
   if (loading) {
     return (
       <div style={s.container}>
-        <p style={{ textAlign: "center", padding: 40, color: "#666" }}>A carregar...</p>
+        <p style={{ textAlign: "center", padding: 40, color: "#666" }}>
+          A carregar...
+        </p>
       </div>
     );
   }
@@ -158,26 +164,31 @@ export default function Perfil() {
   return (
     <div style={s.container}>
       <nav style={s.nav}>
-        <h2 style={s.logo} onClick={() => navigate("/dashboard")}>OrcamentosPME</h2>
-        <button style={s.btnVoltar} onClick={() => navigate("/dashboard")}>← Dashboard</button>
+        <h2 style={s.logo} onClick={() => navigate("/dashboard")}>
+          OrcamentosPME
+        </h2>
+        <button style={s.btnVoltar} onClick={() => navigate("/dashboard")}>
+          ← Dashboard
+        </button>
       </nav>
 
       <div style={s.conteudo}>
         <div style={s.header}>
           <h1 style={s.titulo}>Perfil da Empresa</h1>
-          <p style={s.subtitulo}>Estes dados aparecem no cabeçalho de todos os teus PDFs.</p>
+          <p style={s.subtitulo}>
+            Estes dados aparecem no cabeçalho de todos os teus PDFs.
+          </p>
         </div>
 
         <div style={s.infoBox}>
           <span style={s.infoIcon}>💡</span>
           <span style={s.infoTexto}>
-            Estes dados aparecem no cabeçalho do PDF enviado ao cliente.
-            Quanto mais completo, mais profissional o documento.
+            Estes dados aparecem no cabeçalho do PDF enviado ao cliente. Quanto
+            mais completo, mais profissional o documento.
           </span>
         </div>
 
         <form onSubmit={handleSubmit} style={s.form}>
-
           {/* DADOS DE ACESSO */}
           <div style={s.seccao}>
             <h3 style={s.seccaoTitulo}>Dados de acesso</h3>
@@ -200,7 +211,10 @@ export default function Perfil() {
               <div style={s.campo}>
                 <label style={s.label}>Nome completo *</label>
                 <input
-                  style={{ ...s.input, ...(errosCampos.nome ? s.inputErro : {}) }}
+                  style={{
+                    ...s.input,
+                    ...(errosCampos.nome ? s.inputErro : {}),
+                  }}
                   type="text"
                   name="nome"
                   value={dados.nome}
@@ -209,7 +223,9 @@ export default function Perfil() {
                   placeholder="O teu nome ou nome da empresa"
                   required
                 />
-                {errosCampos.nome && <span style={s.erroInline}>{errosCampos.nome}</span>}
+                {errosCampos.nome && (
+                  <span style={s.erroInline}>{errosCampos.nome}</span>
+                )}
               </div>
 
               <div style={s.campo}>
@@ -227,7 +243,10 @@ export default function Perfil() {
               <div style={s.campo}>
                 <label style={s.label}>NIF</label>
                 <input
-                  style={{ ...s.input, ...(errosCampos.nif ? s.inputErro : {}) }}
+                  style={{
+                    ...s.input,
+                    ...(errosCampos.nif ? s.inputErro : {}),
+                  }}
                   type="text"
                   name="nif"
                   value={dados.nif}
@@ -236,13 +255,18 @@ export default function Perfil() {
                   placeholder="Ex: 318674432"
                   maxLength={9}
                 />
-                {errosCampos.nif && <span style={s.erroInline}>{errosCampos.nif}</span>}
+                {errosCampos.nif && (
+                  <span style={s.erroInline}>{errosCampos.nif}</span>
+                )}
               </div>
 
               <div style={s.campo}>
                 <label style={s.label}>Telefone</label>
                 <input
-                  style={{ ...s.input, ...(errosCampos.telefone ? s.inputErro : {}) }}
+                  style={{
+                    ...s.input,
+                    ...(errosCampos.telefone ? s.inputErro : {}),
+                  }}
                   type="tel"
                   name="telefone"
                   value={dados.telefone}
@@ -250,7 +274,9 @@ export default function Perfil() {
                   onBlur={handleBlur}
                   placeholder="Ex: 914 075 516"
                 />
-                {errosCampos.telefone && <span style={s.erroInline}>{errosCampos.telefone}</span>}
+                {errosCampos.telefone && (
+                  <span style={s.erroInline}>{errosCampos.telefone}</span>
+                )}
               </div>
             </div>
 
@@ -271,7 +297,10 @@ export default function Perfil() {
               <div style={s.campo}>
                 <label style={s.label}>Código Postal</label>
                 <input
-                  style={{ ...s.input, ...(errosCampos.codigoPostal ? s.inputErro : {}) }}
+                  style={{
+                    ...s.input,
+                    ...(errosCampos.codigoPostal ? s.inputErro : {}),
+                  }}
                   type="text"
                   name="codigoPostal"
                   value={dados.codigoPostal}
@@ -280,7 +309,9 @@ export default function Perfil() {
                   placeholder="Ex: 6000-000"
                   maxLength={8}
                 />
-                {errosCampos.codigoPostal && <span style={s.erroInline}>{errosCampos.codigoPostal}</span>}
+                {errosCampos.codigoPostal && (
+                  <span style={s.erroInline}>{errosCampos.codigoPostal}</span>
+                )}
               </div>
             </div>
           </div>
@@ -288,7 +319,8 @@ export default function Perfil() {
           {erro && <div style={s.erro}>{erro}</div>}
           {sucesso && (
             <div style={s.sucesso}>
-              ✅ Perfil guardado com sucesso. Os teus PDFs já incluem os dados actualizados.
+              ✅ Perfil guardado com sucesso. Os teus PDFs já incluem os dados
+              actualizados.
             </div>
           )}
 
@@ -303,27 +335,108 @@ export default function Perfil() {
 
 const s = {
   container: { minHeight: "100vh", backgroundColor: "#f0f2f5" },
-  nav: { backgroundColor: "#fff", padding: "16px 32px", display: "flex", justifyContent: "space-between", alignItems: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
+  nav: {
+    backgroundColor: "#fff",
+    padding: "16px 32px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  },
   logo: { color: "#1a1a2e", margin: 0, cursor: "pointer" },
-  btnVoltar: { padding: "8px 16px", backgroundColor: "transparent", border: "1px solid #ddd", borderRadius: "6px", cursor: "pointer", fontSize: 13 },
+  btnVoltar: {
+    padding: "8px 16px",
+    backgroundColor: "transparent",
+    border: "1px solid #ddd",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: 13,
+    color: "#1a1a2e",
+  },
   conteudo: { padding: "40px 32px", maxWidth: 720, margin: "0 auto" },
   header: { marginBottom: 24 },
   titulo: { color: "#1a1a2e", margin: 0, marginBottom: 4 },
   subtitulo: { color: "#666", fontSize: 14, margin: 0 },
-  infoBox: { display: "flex", alignItems: "flex-start", gap: 12, background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "12px 16px", marginBottom: 24 },
+  infoBox: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 12,
+    background: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: 8,
+    padding: "12px 16px",
+    marginBottom: 24,
+  },
   infoIcon: { fontSize: 18, flexShrink: 0 },
   infoTexto: { fontSize: 13, color: "#1d4ed8", lineHeight: 1.6 },
-  form: { background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", padding: 28 },
+  form: {
+    background: "#fff",
+    borderRadius: 12,
+    boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+    padding: 28,
+  },
   seccao: { marginBottom: 28 },
-  seccaoTitulo: { color: "#1a1a2e", fontSize: 15, fontWeight: 700, marginBottom: 16, marginTop: 0, paddingBottom: 10, borderBottom: "1px solid #f3f4f6" },
+  seccaoTitulo: {
+    color: "#1a1a2e",
+    fontSize: 15,
+    fontWeight: 700,
+    marginBottom: 16,
+    marginTop: 0,
+    paddingBottom: 10,
+    borderBottom: "1px solid #f3f4f6",
+  },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   campo: { marginBottom: 16 },
-  label: { display: "block", marginBottom: 6, color: "#374151", fontWeight: 500, fontSize: 13 },
-  input: { width: "100%", padding: "10px 12px", border: "1px solid #e5e7eb", borderRadius: 6, fontSize: 14, boxSizing: "border-box", outline: "none", fontFamily: "inherit" },
+  label: {
+    display: "block",
+    marginBottom: 6,
+    color: "#374151",
+    fontWeight: 500,
+    fontSize: 13,
+  },
+  input: {
+    width: "100%",
+    padding: "10px 12px",
+    border: "1px solid #e5e7eb",
+    borderRadius: 6,
+    fontSize: 14,
+    boxSizing: "border-box",
+    outline: "none",
+    fontFamily: "inherit",
+  },
   inputErro: { border: "1px solid #ef4444" },
-  erroInline: { fontSize: 11, color: "#ef4444", marginTop: 4, display: "block" },
+  erroInline: {
+    fontSize: 11,
+    color: "#ef4444",
+    marginTop: 4,
+    display: "block",
+  },
   hint: { fontSize: 11, color: "#9ca3af", marginTop: 4, display: "block" },
-  erro: { background: "#fee2e2", color: "#dc2626", padding: "10px 14px", borderRadius: 6, fontSize: 13, marginBottom: 16 },
-  sucesso: { background: "#dcfce7", color: "#16a34a", padding: "10px 14px", borderRadius: 6, fontSize: 13, marginBottom: 16 },
-  btnGuardar: { padding: "11px 28px", backgroundColor: "#2563eb", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: 600, fontSize: 14, fontFamily: "inherit" },
+  erro: {
+    background: "#fee2e2",
+    color: "#dc2626",
+    padding: "10px 14px",
+    borderRadius: 6,
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  sucesso: {
+    background: "#dcfce7",
+    color: "#16a34a",
+    padding: "10px 14px",
+    borderRadius: 6,
+    fontSize: 13,
+    marginBottom: 16,
+  },
+  btnGuardar: {
+    padding: "11px 28px",
+    backgroundColor: "#2563eb",
+    color: "#fff",
+    border: "none",
+    borderRadius: 6,
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 14,
+    fontFamily: "inherit",
+  },
 };
