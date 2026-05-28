@@ -609,12 +609,15 @@ const styles = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
   },
   logo: { color: "#1a1a2e", margin: 0, cursor: "pointer" },
+
   botaoVoltar: {
     padding: "8px 16px",
     backgroundColor: "transparent",
     border: "1px solid #ddd",
     borderRadius: "6px",
     cursor: "pointer",
+    color: "#1a1a2e",
+    fontSize: "14px",
   },
   conteudo: { padding: "40px 32px" },
   header: {
