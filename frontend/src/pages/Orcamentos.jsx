@@ -266,7 +266,7 @@ export default function Orcamentos() {
       ]),
       styles: {
         fontSize: 8,
-        cellPadding: { top: 4, right: 4, bottom: 4, left: 4 },
+        cellPadding: { top: 4, right: 3, bottom: 4, left: 3 },
         overflow: "linebreak",
         valign: "middle",
       },
@@ -279,12 +279,12 @@ export default function Orcamentos() {
       },
       alternateRowStyles: { fillColor: [249, 250, 251] },
       columnStyles: {
-        0: { cellWidth: 10, halign: "center" },
-        1: { cellWidth: 90, halign: "left" },
-        2: { cellWidth: 12, halign: "center" },
+        0: { cellWidth: 12, halign: "center" },
+        1: { cellWidth: 88, halign: "left" },
+        2: { cellWidth: 14, halign: "center" },
         3: { cellWidth: 24, halign: "right" },
         4: { cellWidth: 22, halign: "right" },
-        5: { cellWidth: 24, halign: "right" },
+        5: { cellWidth: 22, halign: "right" },
       },
     });
     // TOTAIS
