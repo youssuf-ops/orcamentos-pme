@@ -126,7 +126,7 @@ export default function Orcamentos() {
     doc.text(userGuardado.empresa || userGuardado.nome || "A tua empresa", 14, 16);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text("ORC\u0041MENTO", W - 14, 11, { align: "right" });
+    doc.text("OR\u00c7AMENTO", W - 14, 11, { align: "right" });
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text(orcamento.numero || "", W - 14, 20, { align: "right" });
